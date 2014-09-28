@@ -70,6 +70,7 @@ public class KalmanFilter {
         this.inverseInnovationCovariance = new Matrix(observationDimension, observationDimension);
 
         this.optimalGain = new Matrix(stateDimension, observationDimension);
+        this.stateEstimate = new Matrix(stateDimension, 1);
         this.estimateCovariance = new Matrix(stateDimension, stateDimension);
 
         this.verticalScratch = new Matrix(stateDimension, observationDimension);
@@ -147,5 +148,34 @@ public class KalmanFilter {
 
     public Matrix getEstimateCovariance() {
         return estimateCovariance;
+    }
+
+    public void setStateTransition(double... doubles){
+        this.stateTransition.setMatrix(doubles);
+    }
+
+    public void setObservationModel(double... doubles){
+        this.observationModel.setMatrix(doubles);
+    }
+
+    public void setObservation(double data[][]) {
+        this.observation = observation;
+    }
+
+    public void setObservation(double... doubles) {
+        this.observation.setMatrix(doubles);
+    }
+
+    public Matrix getObservation() {
+        return observation;
+    }
+
+    public int getObservationDimension() {
+
+        return observationDimension;
+    }
+
+    public Matrix getEstimateData() {
+        return stateEstimate;
     }
 }
