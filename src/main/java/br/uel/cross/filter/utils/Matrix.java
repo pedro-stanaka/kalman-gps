@@ -20,6 +20,12 @@ public class Matrix {
         this.data = new double[rows][cols];
     }
 
+    public Matrix(double data[][]) {
+        this.data = data;
+        this.cols = data[0].length;
+        this.rows = data.length;
+    }
+
     public void setMatrix(double... doubles) {
         assert doubles.length == this.cols * this.rows;
         int count = 0;
@@ -104,11 +110,13 @@ public class Matrix {
      */
     public Matrix multiplyByTranspose(Matrix otherTranspose) {
         assert this.cols == otherTranspose.cols;
+        assert this.cols == otherTranspose.getCols();
 
-        Matrix result = new Matrix(this.rows, otherTranspose.cols);
 
-        for (int i = 0; i < result.getRows(); i++) {
-            for (int j = 0; j < result.getCols(); j++) {
+        Matrix result = new Matrix(this.rows, otherTranspose.rows);
+
+        for (int i = 0; i < result.getRows(); ++i) {
+            for (int j = 0; j < result.getCols(); ++j) {
                 result.getData()[i][j] = 0.0;
 
                 for (int k = 0; k < this.cols; k++) {
@@ -215,7 +223,7 @@ public class Matrix {
 
     private Matrix matrixOperation(Matrix other, Operator operator) {
         assert (this.cols == other.cols);
-        assert (this.rows == other.cols);
+        assert (this.rows == other.rows);
 
         Matrix result = new Matrix(this.rows, this.cols);
         for (int i = 0; i < other.rows; ++i) {
