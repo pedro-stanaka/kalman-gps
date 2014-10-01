@@ -1,8 +1,5 @@
 package br.uel.cross.filter.utils;
 
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.LUDecomposition;
-import org.apache.commons.math3.linear.RealMatrix;
 import org.ejml.simple.SimpleMatrix;
 
 /**
@@ -105,6 +102,7 @@ public class Matrix {
 
     /**
      * Multiply this instance with other matrix transposing it during multiplication.
+     *
      * @param otherTranspose The other matrix to be multiplied.
      * @return Matrix multiplied
      */
@@ -142,8 +140,8 @@ public class Matrix {
 
 
     public boolean equalMatrix(Matrix a, double tolerance) {
-        assert(a.rows == this.rows);
-        assert(a.cols == this.cols);
+        assert (a.rows == this.rows);
+        assert (a.cols == this.cols);
         for (int i = 0; i < a.rows; ++i) {
             for (int j = 0; j < a.cols; ++j) {
                 if (Math.abs(a.getData()[i][j] - this.data[i][j]) > tolerance) {
@@ -155,7 +153,7 @@ public class Matrix {
     }
 
     public Matrix scaleMatrix(double scalar) {
-        assert(scalar != 0.0);
+        assert (scalar != 0.0);
 
         Matrix result = new Matrix(this.rows, this.cols);
         for (int i = 0; i < this.rows; ++i) {
@@ -166,13 +164,18 @@ public class Matrix {
         return result;
     }
 
+    public Matrix inverse() {
+        return this.inverseJordanGauss();
+    }
+
 
     /**
      * Using LU Decomposition to calculate the inverse.
      * May be a good idea to check if Jordan-Gauss used by the original author is better
+     *
      * @return
      */
-    public Matrix inverse(){
+    public Matrix inverseLu() {
         assert isSquare();
         Matrix inverse = new Matrix(this.rows, this.cols);
         SimpleMatrix matrix = new SimpleMatrix(this.data);
@@ -180,45 +183,86 @@ public class Matrix {
 
         for (int i = 0; i < this.rows; i++) {
             for (int j = 0; j < this.cols; j++) {
-                inverse.getData()[i][j] = matrix.get(i,j);
+                inverse.getData()[i][j] = matrix.get(i, j);
             }
         }
 
         return inverse;
     }
 
-    private void swapRows(int r1, int r2) {
-        assert(r1 != r2);
+
+    /**
+     * Use Jordan-Gaus elimination methods.
+     *
+     * @return
+     */
+    public Matrix inverseJordanGauss() {
+        assert isSquare();
+        Matrix result = new Matrix(this.rows, this.cols);
+
+        result.setIdentityMatrix();
+        for (int i = 0; i < this.rows; i++) {
+            if (this.getData(i, i) == 0.0) {
+
+
+                int r;
+                for (r = i + 1; r < this.rows; ++r) {
+                    if (this.getData(r, i) != 0.0) {
+                        break;
+                    }
+                }
+                if (r == this.rows) {
+                    // Every remaining element in this column is zero, so this
+                    // matrix cannot be inverted.
+                    return null;
+                }
+                swapRows(i, r);
+                result.swapRows(i, r);
+            } // end if equals 0
+
+
+            /* Scale this row to ensure a 1 along the diagonal.
+           We might need to worry about overflow from a huge scalar here. */
+            double scalar = 1.0 / this.getData(i, i);
+            scaleRow(i, scalar);
+            result.scaleRow(i, scalar);
+
+            /* Zero out the other elements in this column. */
+            for (int j = 0; j < this.rows; ++j) {
+                if (i == j) {
+                    continue;
+                }
+                double shearNeeded = -this.data[j][i];
+                shearRow(j, i, shearNeeded);
+                result.shearRow(j, i, shearNeeded);
+            }
+        } // end for rows
+        return result;
+    }
+
+    public void swapRows(int r1, int r2) {
+        assert (r1 != r2);
         double tmp[] = this.data[r1];
         this.data[r1] = this.data[r2];
         this.data[r2] = tmp;
     }
 
-    private void scaleRow(int r, double scalar) {
-        assert(scalar != 0.0);
+    public void scaleRow(int r, double scalar) {
+        assert (scalar != 0.0);
         for (int i = 0; i < this.cols; ++i) {
             this.data[r][i] *= scalar;
         }
     }
 
     /**
-     *  Add scalar * row r2 to row r1.
+     * Add scalar * row r2 to row r1.
      */
     private void shearRow(int r1, int r2, double scalar) {
-        assert(r1 != r2);
+        assert (r1 != r2);
         for (int i = 0; i < this.cols; ++i) {
             this.data[r1][i] += scalar * this.data[r2][i];
         }
     }
-
-
-
-
-
-
-
-
-
 
 
     private Matrix matrixOperation(Matrix other, Operator operator) {
@@ -299,7 +343,6 @@ public class Matrix {
         }
 
         public abstract double apply(double x1, double x2);
-
 
 
         @Override

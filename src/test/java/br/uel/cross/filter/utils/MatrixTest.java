@@ -41,9 +41,41 @@ public class MatrixTest {
 
     @Test
     public void testInverse() {
-        assertThat(foo.inverse().getData(0, 0), is(equalTo(-0.2796610169491526)));
-    }
+        Matrix foo = new Matrix(4, 4);
+        foo.setMatrix(
+                1.0, 2.0, 3.0, 4.0,
+                4.0, 1.0, 7.0, 9.0,
+                0.0, 0.0, -4.0, -4.0,
+                2.3, 3.4, 3.1, 0.0);
+        Matrix fooCopy = null;
+        try {
+            fooCopy = foo.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+        Matrix bar;
+        Matrix identity = new Matrix(4, 4);
+        identity.setIdentityMatrix();
 
+        /* foo should be invertible */
+        bar = foo.inverse();
+        assert bar != null;
+        foo.print();
+        System.out.println("####\n\n");
+
+
+        /* The process should leave foo as an identity */
+        assert(foo.equalMatrix(identity, 0.0001));
+
+        /* bar should be foo's inverse in either direction of multiplication */
+        assert fooCopy != null;
+        foo = fooCopy.multipliedBy(bar);
+        foo.print();
+        assert(foo.equalMatrix(identity, 0.0001));
+        foo = bar.multipliedBy(fooCopy);
+        assert(foo.equalMatrix(identity, 0.0001));
+
+    }
 
     @Test
     public void testConstructorArray() {
