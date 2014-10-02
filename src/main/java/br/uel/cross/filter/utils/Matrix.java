@@ -33,7 +33,7 @@ public class Matrix {
         }
     }
 
-    public void setIdentityMatrix() {
+    public Matrix setIdentityMatrix() {
         assert isSquare();
         for (int i = 0; i < this.rows; i++) {
             for (int j = 0; j < this.cols; j++) {
@@ -44,6 +44,7 @@ public class Matrix {
                 }
             }
         }
+        return this;
     }
 
 
@@ -118,7 +119,7 @@ public class Matrix {
                 result.getData()[i][j] = 0.0;
 
                 for (int k = 0; k < this.cols; k++) {
-                    result.getData()[i][j] = this.data[i][k] * otherTranspose.getData()[j][k];
+                    result.data[i][j] += this.data[i][k] * otherTranspose.getData()[j][k];
                 }
             }
         }
@@ -155,13 +156,16 @@ public class Matrix {
     public Matrix scaleMatrix(double scalar) {
         assert (scalar != 0.0);
 
-        Matrix result = new Matrix(this.rows, this.cols);
         for (int i = 0; i < this.rows; ++i) {
             for (int j = 0; j < this.cols; ++j) {
-                result.getData()[i][j] *= scalar;
+                this.data[i][j] *= scalar;
             }
         }
-        return result;
+        return this;
+    }
+
+    private void setData(int i, int j, double value) {
+        this.data[i][j] = value;
     }
 
     public Matrix inverse() {
@@ -310,6 +314,17 @@ public class Matrix {
             }
             System.out.println("");
         }
+    }
+
+    public boolean isZero() {
+        for (int i = 0; i < this.rows; i++) {
+            for (int j = 0; j < this.cols; j++) {
+                if (Math.abs(this.getData(i,j)) != 0.0) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     public double getData(int row, int col) {

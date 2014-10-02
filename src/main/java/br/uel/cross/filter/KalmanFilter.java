@@ -8,7 +8,7 @@ import br.uel.cross.filter.utils.Matrix;
 public class KalmanFilter {
 
     /* k */
-    private int timeStep;
+    private static int timeStep;
 
     /* These parameters define the size of the matrices. */
     private int stateDimension, observationDimension;
@@ -51,7 +51,7 @@ public class KalmanFilter {
     private Matrix bigSquareScratch;
 
     public KalmanFilter(int stateDimension, int observationDimension) {
-        this.timeStep = 0;
+        timeStep = 0;
         this.stateDimension = stateDimension;
         this.observationDimension = observationDimension;
 
@@ -78,13 +78,29 @@ public class KalmanFilter {
         this.bigSquareScratch = new Matrix(stateDimension, stateDimension);
     }
 
+
+    /**
+     *  Runs one timestep of prediction + estimation.
+     *  Before each time step of running this, set f.observation to be the
+     *  next time step's observation.
+     *  Before the first step, define the model by setting:
+     *      stateTransition
+     *      observationModel
+     *      processNoiseCovariance
+     *      observationNoiseCovariance
+     *
+     *
+     *  It is also advisable to initialize with reasonable guesses for
+     *      state_estimate
+     *      estimate_covariance
+     */
     public void update() {
-        predict();
-        estimate();
+        this.predict();
+        this.estimate();
     }
 
-    public void predict() {
-        this.timeStep++;
+    private void predict() {
+        timeStep++;
 
         // Predict state
         predictedState = stateTransition.multipliedBy(stateEstimate);
@@ -93,16 +109,16 @@ public class KalmanFilter {
         bigSquareScratch = stateTransition.multipliedBy(estimateCovariance);
         predictedEstimateCovariance = bigSquareScratch.multiplyByTranspose(stateTransition);
         predictedEstimateCovariance = predictedEstimateCovariance.addMatrix(processNoiseCovariance);
-        
-
     }
 
-    public void estimate() {
+    private void estimate() {
         //TODO: Modified some operations to inline forms, if something break, try fix here
-        innovation = observationModel.multipliedBy(predictedState).subtractMatrix(innovation);
+        innovation = observationModel.multipliedBy(predictedState);
+        innovation = observation.subtractMatrix(innovation);
 
         verticalScratch = predictedEstimateCovariance.multiplyByTranspose(observationModel);
-        innovationCovariance = observationModel.multipliedBy(verticalScratch).addMatrix(observationNoiseCovariance);
+        innovationCovariance = observationModel.multipliedBy(verticalScratch);
+        innovationCovariance = innovationCovariance.addMatrix(observationNoiseCovariance);
 
 
         inverseInnovationCovariance = innovationCovariance.inverse();
@@ -124,14 +140,6 @@ public class KalmanFilter {
 
     public Matrix getStateTransition() {
         return stateTransition;
-    }
-
-    public void setSecondsPerTimeStep(int secondsPerTimeStep) {
-        this.timeStep = secondsPerTimeStep;
-    }
-
-    public Matrix getObservationModel() {
-        return observationModel;
     }
 
     public Matrix getProcessNoiseCovariance() {
@@ -158,24 +166,16 @@ public class KalmanFilter {
         this.observationModel.setMatrix(doubles);
     }
 
-    public void setObservation(double data[][]) {
-        this.observation = observation;
-    }
-
     public void setObservation(double... doubles) {
         this.observation.setMatrix(doubles);
     }
 
-    public Matrix getObservation() {
-        return observation;
+    public void setStateEstimate(double... doubles) {
+        this.stateEstimate.setMatrix(doubles);
     }
 
-    public int getObservationDimension() {
-
-        return observationDimension;
+    public void setProcessNoiseCovariance(double... doubles) {
+        this.processNoiseCovariance.setMatrix(doubles);
     }
 
-    public Matrix getEstimateData() {
-        return stateEstimate;
-    }
 }

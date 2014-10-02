@@ -4,6 +4,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.lessThan;
+import static org.junit.Assert.assertThat;
+
 public class KalmanFilterTest {
 
     private KalmanFilter filter;
@@ -24,10 +30,8 @@ public class KalmanFilterTest {
         filter.getObservationNoiseCovariance().setIdentityMatrix();
 
         double deviation = 1000.0;
-        filter.getStateEstimate().setMatrix(10.0*deviation, 10.0*deviation);
-        filter.getEstimateCovariance().setMatrix(deviation*deviation, deviation*deviation, deviation*deviation, deviation*deviation);
-
-
+        filter.setStateEstimate(10.0*deviation, 1000.00);
+        filter.getEstimateCovariance().setIdentityMatrix().scaleMatrix(deviation*deviation);
     }
 
     @After
@@ -43,8 +47,13 @@ public class KalmanFilterTest {
             filter.update();
         }
 
-        System.out.println("Estimate state: ");
-        filter.getStateEstimate().print();
-        System.out.println("\n");
+//        Debug
+//        System.out.println("Estimated position: " + filter.getStateEstimate().getData(0,0));
+//        System.out.println("Estimated velocity: " + filter.getStateEstimate().getData(1,0));
+
+        assertThat(filter.getStateEstimate().getData(0, 0), is( not(0.0) ));
+        assertThat(filter.getStateEstimate().getData(1, 0), is( not(0.0) ));
+        assertThat(filter.getStateEstimate().getData(0, 0) - 0.0005, is( lessThan(9.0) ));
+        assertThat(filter.getStateEstimate().getData(1,0) - 0.0005, is( lessThan(1.0) ));
     }
 }
