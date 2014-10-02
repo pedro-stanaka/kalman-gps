@@ -1,14 +1,17 @@
 package br.uel.cross.filter;
 
 
-import br.uel.cross.filter.utils.Matrix;
 import br.uel.cross.geoutils.Position;
 
+//TODO: extend KalmanFilter here
 public class GpsKalmanFilter {
     private KalmanFilter filter;
     private final double EARTH_RADIUS_MILES = 3963.1676;
-    private final double MILE_KILOMETER_FACTOR = 1.609344;
 
+
+    public GpsKalmanFilter(double noise) {
+        this(noise, 1.0);
+    }
 
     // TODO fix this constructor it is killing OOP :/
     // If it is not possible to move this initialization code to KalmanFilter itself
@@ -24,16 +27,15 @@ public class GpsKalmanFilter {
          lat/long and more rectangular coordinates. The slight inaccuracy
          of our physics model is not too important.
        */
-        double v2p = 0.001;
         filter.getStateTransition().setIdentityMatrix();
         setSecondsPerTimeStep(timeStep);
 
         /* We observe (x, y) in each time step */
-        filter.getObservationModel().setMatrix(1.0, 0.0, 0.0, 0.0,
-                0.0, 1.0, 0.0, 0.0);
+        filter.setObservationModel(1.0, 0.0, 0.0, 0.0,
+                                   0.0, 1.0, 0.0, 0.0);
         /* Noise in the world. */
         double pos = 0.000001;
-        filter.getProcessNoiseCovariance().setMatrix(pos, 0.0, 0.0, 0.0,
+        filter.setProcessNoiseCovariance(pos, 0.0, 0.0, 0.0,
                 0.0, pos, 0.0, 0.0,
                 0.0, 0.0, 1.0, 0.0,
                 0.0, 0.0, 0.0, 1.0);
@@ -42,10 +44,9 @@ public class GpsKalmanFilter {
                 0.0, pos * noise);
 
         // The start position is totally unknown, so give a high variance
-        filter.getStateEstimate().setMatrix(0.0, 0.0, 0.0, 0.0);
+        filter.setStateEstimate(0l,0l,0l,0l);
         filter.getEstimateCovariance().setIdentityMatrix();
-        double trillion = 10e12;
-        filter.getEstimateCovariance().scaleMatrix(trillion);
+        filter.getEstimateCovariance().scaleMatrix(10e12);
 
     }
 
@@ -77,13 +78,19 @@ public class GpsKalmanFilter {
 
     public double[] getVelocity(){
         double deltas[] = new double[2];
-        deltas[0] = (filter.getStateEstimate().getData()[2][0] / 1000.0);
-        deltas[1] = (filter.getStateEstimate().getData()[3][0] / 1000.0);
+        deltas[0] = (filter.getStateEstimate().getData()[2][0] / (1000.0 * 1000.0));
+        deltas[1] = (filter.getStateEstimate().getData()[3][0] / (1000.0 * 1000.0));
         return deltas;
     }
 
+    public void updateVelocity2d(double lat, double lng, double secondsSinceLastTimestep){
+        setSecondsPerTimeStep(secondsSinceLastTimestep);
+        this.filter.setObservation(lat*1000.0, lng * 1000.0);
+        this.filter.update();
+    }
+
     public double getBearing() {
-        double lat, lng, deltaLat, deltaLng, x, y;
+        double deltaLat, deltaLng, x, y;
         Position position = getPosition();
         double[] velocity = getVelocity();
 
@@ -95,11 +102,9 @@ public class GpsKalmanFilter {
 
         double lat1 = position.getLat() - deltaLat;
         y = Math.sin(deltaLng) * Math.cos(position.getLat());
-        x = Math.cos(lat1) * Math.sin(lat1) * Math.cos(position.getLat()) * Math.cos(deltaLng);
+        x = Math.cos(lat1) * Math.sin(position.getLat()) - Math.sin(lat1) * Math.cos(position.getLat()) * Math.cos(deltaLng);
 
         double bearing = Math.atan2(y, x);
-
-
         bearing = Math.toDegrees(bearing);
 
         while(bearing >= 360.0) {
@@ -122,13 +127,12 @@ public class GpsKalmanFilter {
         deltaLat = Math.toRadians(deltaLat);
         deltaLng = Math.toRadians(deltaLng);
         double lat = Math.toRadians(position.getLat());
-        double lng = Math.toRadians(position.getLng());
 
         // Haversine formula
         double lat1 = lat - deltaLat;
         double sinHalfDlat = Math.sin(deltaLat / 2.0);
         double sinHalfDlng = Math.sin(deltaLng / 2.0);
-        double a = Math.pow(sinHalfDlat, 2.0) + Math.cos(lat1) * Math.cos(lat) + Math.pow(sinHalfDlng, 2.0);
+        double a = Math.pow(sinHalfDlat, 2.0) + Math.cos(lat1) * Math.cos(lat) * Math.pow(sinHalfDlng, 2.0);
         double radiansPerSecond = 2.0 * Math.atan2(1000.0 * Math.sqrt(a), 1000.0 * Math.sqrt(1.0 - a));
 
 
@@ -138,7 +142,12 @@ public class GpsKalmanFilter {
 
     public double getMph() {
         double[] velocity = getVelocity();
-        return calculateMph(getPosition(), velocity[0], velocity[1]);
+        Position position = getPosition();
+        return calculateMph(position, velocity[0], velocity[1]);
+    }
+
+    public double getKmh() {
+        return getMph() * 1.609344;
     }
 
 }

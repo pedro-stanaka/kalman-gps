@@ -61,4 +61,12 @@ public class Position {
     public void setVelocity(double velocity) {
         this.velocity = velocity;
     }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "lat=" + lat +
+                ", lng=" + lng +
+                '}';
+    }
 }
