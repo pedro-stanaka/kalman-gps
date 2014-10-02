@@ -60,8 +60,6 @@ public class MatrixTest {
         /* foo should be invertible */
         bar = foo.inverse();
         assert bar != null;
-        foo.print();
-        System.out.println("####\n\n");
 
 
         /* The process should leave foo as an identity */
@@ -70,7 +68,6 @@ public class MatrixTest {
         /* bar should be foo's inverse in either direction of multiplication */
         assert fooCopy != null;
         foo = fooCopy.multipliedBy(bar);
-        foo.print();
         assert(foo.equalMatrix(identity, 0.0001));
         foo = bar.multipliedBy(fooCopy);
         assert(foo.equalMatrix(identity, 0.0001));
@@ -90,7 +87,7 @@ public class MatrixTest {
 
     @Test
     public void testMultiplyTranspose() throws Exception {
-        assertThat(m42.multiplyByTranspose(m32).getData(1, 1), is(equalTo(1162.0)));
+        assertThat(m42.multiplyByTranspose(m32).getData(1, 1), is(equalTo(-28835.0)));
     }
 
     @Test
