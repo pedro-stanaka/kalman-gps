@@ -1,7 +1,5 @@
 package br.uel.cross.geoutils;
 
-import javafx.geometry.Pos;
-
 import java.util.Date;
 import java.util.List;
 
